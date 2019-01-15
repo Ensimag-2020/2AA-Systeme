@@ -74,7 +74,7 @@
 \section{Introduction}
 \subsection{Bibliographie}
 
-Tanenbaum: Modern Operating Systems
+Tanenbaum: Modern Operating Systems \\
 Silberschatz: Operating Systems Concepts
 
 \subsection{Plan}
@@ -194,10 +194,57 @@ Déroulement du boot
 La maîtrise de la machine physique devient de plus en plus lointaine, même au niveau des OS.
 
 \subsection{Modularité}
-\begin{figure}
+\begin{figure}[ht]
     \centering
     \includegraphics{img/modular-os.pdf}
 \end{figure}
 
+Les \textbf{systèmes de fichier virtuels} sont une API haut niveau pour l'ouverture, la fermeture, la lecture, l'écriture de fichiers. Les filesystems sont par exemple ext4, btrfs, fat, fat32, ntfs.
+
+\subsection{Histoire}
+"L'histoire de l'informatique, ça remonte aux machines automatiques pour faire des trucs."
+\subsubsection{Préhistoire}
+\begin{itemize}
+    \item Babylone
+    \item Machine Héron d'Alexandrie
+\end{itemize}
+
+\subsubsection{Histoire}
+\paragraph{Epoque mécanique}
+\begin{itemize}
+    \item Pascal
+    \item Babbage: machine universelle programmable
+    \item Ada Lovelace (if, boucle)
+\end{itemize}
+
+\paragraph{Antiquité}
+\begin{itemize}
+    \item Turing
+    \item ENIAC
+\end{itemize}
+
+\paragraph{Moyen-Âge}
+\begin{itemize}
+    \item IO: cartes perforées
+    \item Tampon: copie des IO en RAM
+\end{itemize}
+
+\paragraph{Monde moderne (1960)}
+\begin{itemize}
+    \item MULTICS: OS moderned (processus, droits, fichiers, multi-utilisateurs)
+    \item 1969 : Mini-ordinateur: PDP11
+    \item UNIX : (asm pour la première version, C pour la deuxième)
+    \item 1974 : Micro-ordinateurs
+    \begin{itemize}
+        \item Grand public : pas assez puissants pour faire tourner UNIX, donc utilisation de CP/M (8 bits, 16ko RAM) puis DOS en 1981
+        \item Station de travail : permettent de faire tourner UNIX
+    \end{itemize}
+    \item 1987 : Minix, reste petit pour permettre d'être un outil pédagogique (bouquin avec src + explication)
+    \item 1991 : Linux \begin{itemize}
+        \item internet
+        \item GPL : possibilité de voir et modifier le code, obligation de distribuer le code modifié
+    \end{itemize}
+
+\end{itemize}
 
 \end{document}
