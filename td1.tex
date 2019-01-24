@@ -76,19 +76,19 @@
 
 \section{TD1 - Dekker}
 Avec deux processeurs:
-\begin{lstlisting}[frame=single]
+\begin{minted}[frame=single]{c}
 	debut_SCC();
 		load $i, %r0
 		inc %r0
 		store %r0, $i
 	fin_SCC();
-\end{lstlisting}
+\end{minted}
 Après l'execution des instructions, i=1|2.\\
 Ce qu'on veut avoir c'est obtenir i=2 et pas i=1
 
 \subsection{Zero}
 En utilisant cette fonction:
-\begin{lstlisting}[frame=single]
+\begin{minted}[frame=single]{c}
 	bool occ=false; //occupe
 	debut_SCC(){
 		alpha: 
@@ -100,13 +100,13 @@ En utilisant cette fonction:
 	finSCC(){
 		occ = false;;
 	}
-\end{lstlisting}
+\end{minted}
 On n'obtient pas d'exclusion mutuelle.
 
 \pagebreak
 
 \subsection{One}
-\begin{lstlisting}[frame=single]
+\begin{minted}[frame=single]{c}
 	bool occ = false;
 	\\ecrire avant le test
 	
@@ -121,11 +121,11 @@ On n'obtient pas d'exclusion mutuelle.
 	finSCC(){
 		occ = false;
 	}
-\end{lstlisting}
+\end{minted}
 Pas d'exclusion mutuelle.
 
 \subsection{Two}
-\begin{lstlisting}[frame=single]
+\begin{minted}[frame=single]{c}
 	int tour = 0;
 	p; // num de processeur {0;1}
 	q = 1 - p; // num de l'autre processeur
@@ -140,14 +140,14 @@ Pas d'exclusion mutuelle.
 	finSCC(){
 		tour = 1 - p;
 	}
-\end{lstlisting}
+\end{minted}
 Exclusion mutuelle OK, par contre, le bout de code cause un problème de famine.\\
 L'autre processeur ne pourra jamais executer la section critique.
 
 \pagebreak
 
 \subsection{Three}
-\begin{lstlisting}[frame=single]
+\begin{minted}[frame=single]{c}
 	bool access[2] = {false};
 	//Accede a acces[] avec p/q <-annoncer ma demande avant la boucle 
 
@@ -161,13 +161,13 @@ L'autre processeur ne pourra jamais executer la section critique.
 	finSCC(){
 		acces[p] = false;
 	}
-\end{lstlisting}
+\end{minted}
 Exclusion mutuelle OK.\\
 Si les deux processeurs executent le code en même temps, ils rentrent dans une boucle infinie.\\
 Probleme de \textbf{dead\_lock}, les deux processeurs ne font plus rien.
 
 \subsection{Four}
-\begin{lstlisting}[frame=single]
+\begin{minted}[frame=single]{c}
 	bool access[2] = {false, false};
 	// Three et renoncer a sa demande
 	// On recommence tout
@@ -185,7 +185,7 @@ Probleme de \textbf{dead\_lock}, les deux processeurs ne font plus rien.
 	finSCC(){
 		acces[p] = false;
 	}
-\end{lstlisting}
+\end{minted}
 Probleme de \textbf{dead\_lock} si synchrone
 Il faut qu'ils arrivent en même temps et qu'ils restent synchrones pour que ça marche.
 
@@ -193,7 +193,7 @@ Il faut qu'ils arrivent en même temps et qu'ils restent synchrones pour que ça
 
 \subsection{Five}
 
-\begin{lstlisting}[frame=single]
+\begin{minted}[frame=single]{c}
 	bool access[2] = {false, false};
 	int tour;
 	// Comme la Four
@@ -212,14 +212,14 @@ Il faut qu'ils arrivent en même temps et qu'ils restent synchrones pour que ça
 		acces[p] = false;
 		tour = q;
 	}
-\end{lstlisting}
+\end{minted}
 Pas d'exclusion mutuelle
 
 \pagebreak
 
 \subsection{Six}
 
-\begin{lstlisting}[frame=single]
+\begin{minted}[frame=single]{c}
 	bool access[2] = {false, false};
 	int tour;
 	// Comme la Four
@@ -249,7 +249,7 @@ Pas d'exclusion mutuelle
 		acces[p] = false;
 		tour = q;
 	}
-\end{lstlisting}
+\end{minted}
 Avant de commencer, je verifie que je suis dans le bon etat.\\
 Meme si c'est mon tour, je vais attendre que l'autre renonce à acces.\\
 L'autre cas c'est si je suis en conflit, je renonce à mon tour.\\
@@ -259,7 +259,7 @@ Une fois qu'il a fini, le tour devriendra le miens
 
 \subsection{Seven - La solution correcte de Peterson}
 La solution correcte:
-\begin{lstlisting}[frame=single]
+\begin{minted}[frame=single]{c}
 	bool access[2] = {false, false};
 	int dernier;
 
@@ -276,5 +276,5 @@ La solution correcte:
 		acces[p] = false;
 	}
 
-\end{lstlisting}
+\end{minted}
 \end{document}

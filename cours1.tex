@@ -288,7 +288,7 @@ Pour gérer cela, il faut des programme\textbf{\underline{S}}\\
 Utilisation de mémoire virtuelles au lieu de celles physiques.\\
 Indirection dans les adresses manipulées par les programmes.
 
-\begin{lstlisting}[frame=single]  
+\begin{minted}[frame=single]{c}  
     int a; // juste la somme de la taille
     const in b = 10; // read only
     int c = 20;
@@ -298,7 +298,7 @@ Indirection dans les adresses manipulées par les programmes.
         return 0;
     }
     
-\end{lstlisting}
+\end{minted}
 
 Pagination: espace virtuel est coupé en page de 4ko pour n'avoir que les morceaux intéressants de la mémoire
 
@@ -397,7 +397,7 @@ Java compile le code en instruction assembleur qui seront exécutées sur une JV
 \end{itemize}
 
 \subsection{Fork}
-\begin{lstlisting}[frame=single]
+\begin{minted}[frame=single]{c}
 int r = fork(); // cree une copie du processus appelant  
 switch(r){
 	case -1:
@@ -409,18 +409,18 @@ switch(r){
 	default:
 		le pere de "r" (PID de mon fils)
 }  
-\end{lstlisting}
+\end{minted}
 
 Après l'appel de fork, le processus fils continue ce qu'on père était en train de faire.
 
 \subsection{exec}
 exec [p|up|lp|le|e]
-\begin{lstlisting}[frame=single]
+\begin{minted}[frame=single]{c}
 	execvp("file", tab);
 	// arg1: nom programme apres lancement, arg2: nom commande,
 	// arg3: parametres de la commande lancee
 	execlp("ls", "ls", "-l"); 
-\end{lstlisting}
+\end{minted}
 
 \subsection{Wait}
 wait(), waitpid() (exclusivité du père), attend la mort du processus
@@ -438,12 +438,12 @@ kill -15 -1, tue plus gentillement, les applis ont le temps
 \section{Threads}
 \subsection{Création d'un thread}
 
-\begin{lstlisting}[frame=single]
+\begin{minted}[frame=single]{c}
 	int main(){
 		auto th = new thread([](){cout << "hello" << endl;});
 		th->join();
 	}	
-\end{lstlisting}
+\end{minted}
 
 \subsection{Gestion de la concurrence}
 Variables d'états \underline{partagées}
@@ -453,7 +453,7 @@ Stratégie: modification 1 à la fois
 \end{itemize}
 
 Exemple de base: 2 threads executant A() et B(): le but est d'afficher 20
-\begin{lstlisting}[frame=single]
+\begin{minted}[frame=single]{c}
 	int a = 10;
 	A(){
 		a=20;
@@ -461,10 +461,10 @@ Exemple de base: 2 threads executant A() et B(): le but est d'afficher 20
 	B(){
 		printf("%d\n", a);
 	}
-\end{lstlisting}
+\end{minted}
 Ne marche pas
 
-\begin{lstlisting}[frame=single]
+\begin{minted}[frame=single]{c}
 	int a = 10;
 	bool fini = false;
 	A(){
@@ -475,7 +475,7 @@ Ne marche pas
 		while(!fini);
 		printf("%d\n", a);
 	}
-\end{lstlisting}
+\end{minted}
 Ne marche toujours pas
 
 \pagebreak
@@ -484,7 +484,7 @@ Ne marche toujours pas
 Tony Hoare, le meme gars qui a inventé le qsort, a proposé l'utilisation de monitors, des fonctions en exclusion mutuelle. \\
 On utilise aussi des variables de condition, elles servent à attendre jusqu'à ce qu'on nous reveille (wait, signal).
 
-\begin{lstlisting}[frame=single]
+\begin{minted}[frame=single]{c}
 	mtx_t m; // mutex
 	cnd_c c;
 	int a = 10;
@@ -502,25 +502,25 @@ On utilise aussi des variables de condition, elles servent à attendre jusqu'à 
 			cnd_wait(&c, &m) 
 		printf("...")
 	}
-\end{lstlisting}
+\end{minted}
 
 \pagebreak
 
 \section{TD1 - Dekker}
 Avec deux processeurs:
-\begin{lstlisting}[frame=single]
+\begin{minted}[frame=single]{c}
 	debut_SCC();
 		load $i, %r0
 		inc %r0
 		store %r0, $i
 	fin_SCC();
-\end{lstlisting}
+\end{minted}
 Après l'execution des instructions, i=1|2.\\
 Ce qu'on veut avoir c'est obtenir i=2 et pas i=1
 
 \subsection{Zero}
 En utilisant cette fonction:
-\begin{lstlisting}[frame=single]
+\begin{minted}[frame=single]{c}
 	bool occ=false; //occupe
 	debut_SCC(){
 		alpha: 
@@ -532,13 +532,13 @@ En utilisant cette fonction:
 	finSCC(){
 		occ = false;;
 	}
-\end{lstlisting}
+\end{minted}
 On n'obtient pas d'exclusion mutuelle.
 
 \pagebreak
 
 \subsection{One}
-\begin{lstlisting}[frame=single]
+\begin{minted}[frame=single]{c}
 	bool occ = false;
 	\\ecrire avant le test
 	
@@ -553,11 +553,11 @@ On n'obtient pas d'exclusion mutuelle.
 	finSCC(){
 		occ = false;
 	}
-\end{lstlisting}
+\end{minted}
 Pas d'exclusion mutuelle.
 
 \subsection{Two}
-\begin{lstlisting}[frame=single]
+\begin{minted}[frame=single]{c}
 	int tour = 0;
 	p; // num de processeur {0;1}
 	q = 1 - p; // num de l'autre processeur
@@ -572,14 +572,14 @@ Pas d'exclusion mutuelle.
 	finSCC(){
 		tour = 1 - p;
 	}
-\end{lstlisting}
+\end{minted}
 Exclusion mutuelle OK, par contre, le bout de code cause un problème de famine.\\
 L'autre processeur ne pourra jamais executer la section critique.
 
 \pagebreak
 
 \subsection{Three}
-\begin{lstlisting}[frame=single]
+\begin{minted}[frame=single]{c}
 	bool access[2] = {false};
 	//Accede a acces[] avec p/q <-annoncer ma demande avant la boucle 
 
@@ -593,13 +593,13 @@ L'autre processeur ne pourra jamais executer la section critique.
 	finSCC(){
 		acces[p] = false;
 	}
-\end{lstlisting}
+\end{minted}
 Exclusion mutuelle OK.\\
 Si les deux processeurs executent le code en même temps, ils rentrent dans une boucle infinie.\\
 Probleme de \textbf{dead\_lock}, les deux processeurs ne font plus rien.
 
 \subsection{Four}
-\begin{lstlisting}[frame=single]
+\begin{minted}[frame=single]{c}
 	bool access[2] = {false, false};
 	// Three et renoncer a sa demande
 	// On recommence tout
@@ -617,7 +617,7 @@ Probleme de \textbf{dead\_lock}, les deux processeurs ne font plus rien.
 	finSCC(){
 		acces[p] = false;
 	}
-\end{lstlisting}
+\end{minted}
 Probleme de \textbf{dead\_lock} si synchrone
 Il faut qu'ils arrivent en même temps et qu'ils restent synchrones pour que ça marche.
 
@@ -625,7 +625,7 @@ Il faut qu'ils arrivent en même temps et qu'ils restent synchrones pour que ça
 
 \subsection{Five}
 
-\begin{lstlisting}[frame=single]
+\begin{minted}[frame=single]{c}
 	bool access[2] = {false, false};
 	int tour;
 	// Comme la Four
@@ -644,14 +644,14 @@ Il faut qu'ils arrivent en même temps et qu'ils restent synchrones pour que ça
 		acces[p] = false;
 		tour = q;
 	}
-\end{lstlisting}
+\end{minted}
 Pas d'exclusion mutuelle
 
 \pagebreak
 
 \subsection{Six}
 
-\begin{lstlisting}[frame=single]
+\begin{minted}[frame=single]{c}
 	bool access[2] = {false, false};
 	int tour;
 	// Comme la Four
@@ -681,7 +681,7 @@ Pas d'exclusion mutuelle
 		acces[p] = false;
 		tour = q;
 	}
-\end{lstlisting}
+\end{minted}
 Avant de commencer, je verifie que je suis dans le bon etat.\\
 Meme si c'est mon tour, je vais attendre que l'autre renonce à acces.\\
 L'autre cas c'est si je suis en conflit, je renonce à mon tour.\\
@@ -691,7 +691,7 @@ Une fois qu'il a fini, le tour devriendra le miens
 
 \subsection{Seven - La solution correcte de Peterson}
 La solution correcte:
-\begin{lstlisting}[frame=single]
+\begin{minted}[frame=single]{c}
 	bool access[2] = {false, false};
 	int dernier;
 
@@ -708,5 +708,5 @@ La solution correcte:
 		acces[p] = false;
 	}
 
-\end{lstlisting}
+\end{minted}
 \end{document}

@@ -130,7 +130,7 @@ Java compile le code en instruction assembleur qui seront exécutées sur une JV
 \end{itemize}
 
 \subsection{Fork}
-\begin{lstlisting}[frame=single]
+\begin{minted}[frame=single]{c}
 int r = fork(); // cree une copie du processus appelant  
 switch(r){
 	case -1:
@@ -142,18 +142,18 @@ switch(r){
 	default:
 		le pere de "r" (PID de mon fils)
 }  
-\end{lstlisting}
+\end{minted}
 
 Après l'appel de fork, le processus fils continue ce qu'on père était en train de faire.
 
 \subsection{exec}
 exec [p|up|lp|le|e]
-\begin{lstlisting}[frame=single]
+\begin{minted}[frame=single]{c}
 	execvp("file", tab);
 	// arg1: nom programme apres lancement, arg2: nom commande,
 	// arg3: parametres de la commande lancee
 	execlp("ls", "ls", "-l"); 
-\end{lstlisting}
+\end{minted}
 
 \subsection{Wait}
 wait(), waitpid() (exclusivité du père), attend la mort du processus
@@ -171,12 +171,12 @@ kill -15 -1, tue plus gentillement, les applis ont le temps
 \section{Threads}
 \subsection{Création d'un thread}
 
-\begin{lstlisting}[frame=single]
+\begin{minted}[frame=single]{c}
 	int main(){
 		auto th = new thread([](){cout << "hello" << endl;});
 		th->join();
 	}	
-\end{lstlisting}
+\end{minted}
 
 \subsection{Gestion de la concurrence}
 Variables d'états \underline{partagées}
@@ -186,7 +186,7 @@ Stratégie: modification 1 à la fois
 \end{itemize}
 
 Exemple de base: 2 threads executant A() et B(): le but est d'afficher 20
-\begin{lstlisting}[frame=single]
+\begin{minted}[frame=single]{c}
 	int a = 10;
 	A(){
 		a=20;
@@ -194,10 +194,10 @@ Exemple de base: 2 threads executant A() et B(): le but est d'afficher 20
 	B(){
 		printf("%d\n", a);
 	}
-\end{lstlisting}
+\end{minted}
 Ne marche pas
 
-\begin{lstlisting}[frame=single]
+\begin{minted}[frame=single]{c}
 	int a = 10;
 	bool fini = false;
 	A(){
@@ -208,7 +208,7 @@ Ne marche pas
 		while(!fini);
 		printf("%d\n", a);
 	}
-\end{lstlisting}
+\end{minted}
 Ne marche toujours pas
 
 \pagebreak
@@ -217,7 +217,7 @@ Ne marche toujours pas
 Tony Hoare, le meme gars qui a inventé le qsort, a proposé l'utilisation de monitors, des fonctions en exclusion mutuelle. \\
 On utilise aussi des variables de condition, elles servent à attendre jusqu'à ce qu'on nous reveille (wait, signal).
 
-\begin{lstlisting}[frame=single]
+\begin{minted}[frame=single]{c}
 	mtx_t m; // mutex
 	cnd_c c;
 	int a = 10;
@@ -235,6 +235,6 @@ On utilise aussi des variables de condition, elles servent à attendre jusqu'à 
 			cnd_wait(&c, &m) 
 		printf("...")
 	}
-\end{lstlisting}
+\end{minted}
 
 \end{document}
