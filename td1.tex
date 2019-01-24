@@ -1,0 +1,280 @@
+\documentclass[11pt]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+
+\usepackage[a4paper, left=2cm, right=2cm, top=3.5cm, bottom=3.5cm]{geometry}
+\usepackage[french]{babel}
+
+% Paragraph spacing
+\setlength{\parskip}{1em}
+
+% Fancy headers
+\usepackage{fancyhdr}
+
+% Captions for subfigures
+\usepackage{subcaption}
+
+
+% Code highlighting
+\usepackage{minted}
+
+% Footnote inside a caption
+\usepackage{fnpos}
+\usepackage{ftnxtra}
+
+% Maths
+\usepackage{amsmath}
+\usepackage{amssymb}
+
+% Todo notes
+\usepackage{todonotes}
+
+% Table of contents for bibliography
+\usepackage[nottoc]{tocbibind}
+
+% Inline monospace font
+\def\code#1{\texttt{#1}}
+
+% Figures
+\usepackage{graphicx}
+
+% Draw figures
+\usepackage{tikz}
+
+% Code listing
+\usepackage{listings}
+
+% Tikz node rotation
+\usetikzlibrary{positioning}
+
+% Turing machine
+\usetikzlibrary{chains,fit,shapes}
+
+% Usage: \rotnode[options]{rotation}{text}
+\newcommand\rotnode[3][]{%
+\node [#1, opacity=0.0] (tmp) {#3};
+\node [draw, rotate around={#2:(tmp.center)}] at (tmp) {#3};
+}
+
+% Clickable links
+\usepackage{hyperref}
+% Table of contents depth
+\setcounter{tocdepth}{2}
+
+% Inline code
+\usepackage{listings}
+\usepackage{color}
+
+\title{Systèmes d'exploitation}
+
+\author{William SCHMITT \& Othmane AJDOR}
+\date{2018-2019}
+
+\begin{document}
+\maketitle
+
+\section{TD1 - Dekker}
+Avec deux processeurs:
+\begin{lstlisting}[frame=single]
+	debut_SCC();
+		load $i, %r0
+		inc %r0
+		store %r0, $i
+	fin_SCC();
+\end{lstlisting}
+Après l'execution des instructions, i=1|2.\\
+Ce qu'on veut avoir c'est obtenir i=2 et pas i=1
+
+\subsection{Zero}
+En utilisant cette fonction:
+\begin{lstlisting}[frame=single]
+	bool occ=false; //occupe
+	debut_SCC(){
+		alpha: 
+			if (occ) 
+				goto alpha; 
+			occ = true;
+	}
+
+	finSCC(){
+		occ = false;;
+	}
+\end{lstlisting}
+On n'obtient pas d'exclusion mutuelle.
+
+\pagebreak
+
+\subsection{One}
+\begin{lstlisting}[frame=single]
+	bool occ = false;
+	\\ecrire avant le test
+	
+	debut_SCC(){
+		int old = occ; // local var
+		occ = true;
+		alpha : if(old)
+					old = occ;
+				goto alpha;
+	}
+
+	finSCC(){
+		occ = false;
+	}
+\end{lstlisting}
+Pas d'exclusion mutuelle.
+
+\subsection{Two}
+\begin{lstlisting}[frame=single]
+	int tour = 0;
+	p; // num de processeur {0;1}
+	q = 1 - p; // num de l'autre processeur
+
+	debut_SCC(){
+		alpha:
+			if (tour != p){
+				goto alpha;
+			}
+	}
+
+	finSCC(){
+		tour = 1 - p;
+	}
+\end{lstlisting}
+Exclusion mutuelle OK, par contre, le bout de code cause un problème de famine.\\
+L'autre processeur ne pourra jamais executer la section critique.
+
+\pagebreak
+
+\subsection{Three}
+\begin{lstlisting}[frame=single]
+	bool access[2] = {false};
+	//Accede a acces[] avec p/q <-annoncer ma demande avant la boucle 
+
+	debut_SCC(){
+		acces[p] = true;
+		alpha:
+			if (acces[q])
+				goto alpha;
+	}
+
+	finSCC(){
+		acces[p] = false;
+	}
+\end{lstlisting}
+Exclusion mutuelle OK.\\
+Si les deux processeurs executent le code en même temps, ils rentrent dans une boucle infinie.\\
+Probleme de \textbf{dead\_lock}, les deux processeurs ne font plus rien.
+
+\subsection{Four}
+\begin{lstlisting}[frame=single]
+	bool access[2] = {false, false};
+	// Three et renoncer a sa demande
+	// On recommence tout
+
+	debut_SCC(){
+		alpha:
+			acces[p] = true;
+			if (acces[q])
+				acces[p] = false;
+				// en reseau recursive doubling
+				sleep(random); 
+				goto alpha;
+	}
+
+	finSCC(){
+		acces[p] = false;
+	}
+\end{lstlisting}
+Probleme de \textbf{dead\_lock} si synchrone
+Il faut qu'ils arrivent en même temps et qu'ils restent synchrones pour que ça marche.
+
+\pagebreak
+
+\subsection{Five}
+
+\begin{lstlisting}[frame=single]
+	bool access[2] = {false, false};
+	int tour;
+	// Comme la Four
+	// Celui dont ce n'est pas le tour renonce
+
+	debut_SCC(){
+		alpha:
+			acces[p] = true;
+			if (p != tour && acces [q])
+				acces[p] = false;
+				sleep(random); 
+				goto alpha;
+	}
+
+	finSCC(){
+		acces[p] = false;
+		tour = q;
+	}
+\end{lstlisting}
+Pas d'exclusion mutuelle
+
+\pagebreak
+
+\subsection{Six}
+
+\begin{lstlisting}[frame=single]
+	bool access[2] = {false, false};
+	int tour;
+	// Comme la Four
+	// Celui dont ce n'est pas le tour renonce
+
+	debut_SCC(){
+		acces[p] = true;
+		
+		alpha:
+			if(acces[q]){
+				if(tour==p){
+					beta:
+						if(access[q])
+							goto beta;
+				}
+				else {
+					acces[p] = false
+					sigma: if(tour==q):
+						goto sigma;
+					goto alpha;
+				}
+			}
+
+		}
+
+	finSCC(){
+		acces[p] = false;
+		tour = q;
+	}
+\end{lstlisting}
+Avant de commencer, je verifie que je suis dans le bon etat.\\
+Meme si c'est mon tour, je vais attendre que l'autre renonce à acces.\\
+L'autre cas c'est si je suis en conflit, je renonce à mon tour.\\
+Une fois qu'il a fini, le tour devriendra le miens
+
+\pagebreak
+
+\subsection{Seven - La solution correcte de Peterson}
+La solution correcte:
+\begin{lstlisting}[frame=single]
+	bool access[2] = {false, false};
+	int dernier;
+
+	debut_SCC(){
+		acces[p] = true;
+		dernier = p;
+		alpha:
+			if (acces[q]){
+				if(dernier ==p)
+					goto alpha;
+			}
+
+	finSCC(){
+		acces[p] = false;
+	}
+
+\end{lstlisting}
+\end{document}

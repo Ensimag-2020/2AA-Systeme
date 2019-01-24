@@ -1,0 +1,240 @@
+\documentclass[11pt]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+
+\usepackage[a4paper, left=2cm, right=2cm, top=3.5cm, bottom=3.5cm]{geometry}
+\usepackage[french]{babel}
+
+% Paragraph spacing
+\setlength{\parskip}{1em}
+
+% Fancy headers
+\usepackage{fancyhdr}
+
+% Captions for subfigures
+\usepackage{subcaption}
+
+
+% Code highlighting
+\usepackage{minted}
+
+% Footnote inside a caption
+\usepackage{fnpos}
+\usepackage{ftnxtra}
+
+% Maths
+\usepackage{amsmath}
+\usepackage{amssymb}
+
+% Todo notes
+\usepackage{todonotes}
+
+% Table of contents for bibliography
+\usepackage[nottoc]{tocbibind}
+
+% Inline monospace font
+\def\code#1{\texttt{#1}}
+
+% Figures
+\usepackage{graphicx}
+
+% Draw figures
+\usepackage{tikz}
+
+% Code listing
+\usepackage{listings}
+
+% Tikz node rotation
+\usetikzlibrary{positioning}
+
+% Turing machine
+\usetikzlibrary{chains,fit,shapes}
+
+% Usage: \rotnode[options]{rotation}{text}
+\newcommand\rotnode[3][]{%
+\node [#1, opacity=0.0] (tmp) {#3};
+\node [draw, rotate around={#2:(tmp.center)}] at (tmp) {#3};
+}
+
+% Clickable links
+\usepackage{hyperref}
+% Table of contents depth
+\setcounter{tocdepth}{2}
+
+% Inline code
+\usepackage{listings}
+\usepackage{color}
+
+\title{Systèmes d'exploitation}
+
+\author{William SCHMITT \& Othmane AJDOR}
+\date{2018-2019}
+
+\begin{document}
+\maketitle
+
+\section{Virtualisation}
+\subsection{Niveaux de virtualisation}
+\subsubsection{Hardware}
+\begin{itemize}
+
+	\item mainframe IBM: fait tourner des OS où chacun croit être le seul sur la machine
+	\item Intel (peut faire pareil, marche +/- bien) -> Xen\\
+	      4 mode de protection du CPU (3 user à 0 kernel), mode -1 permet de changer la position de l'indice PC, qui normalement ne peut pas être changée.
+\end{itemize}
+
+\subsubsection{OS}
+\paragraph{VM}
+VirtualBox, Qemu ...où l'OS hôte fait tourner des OS invités
+KVM permet de mettre des instructions de l'OS invité sur le matériel de l'OS hôte.
+\paragraph{Container}
+Container Docker, on ne simule pas un OS complet au dessus d'un autre, mais on va par exemple séparer le Filesystem, le réseau, allouer la RAM différemment. Il existe un seul OS dans ce cas mais certaines bibliothèques peuvent être rendues privées pour un conteneur mais pas pour l'autre.
+\paragraph{JAVA -> JVM}
+Java compile le code en instruction assembleur qui seront exécutées sur une JVM qui tourne sur l'OS. Python et Perl font à peu près la même chose (JiT).
+
+\subsubsection{Sondage Partage Processus/Thread}
+% \paragraph{Programme}
+% Processus 1 -> Thread 1 (une fonction du programme du processus)
+% \paragraph{Pile}
+% 1 par Thread du processus, soit plusieurs <- 1 par Thread
+% \paragraph{Données}
+% \paragraph{Fichiers}
+
+\begin{table}[h!]
+	\begin{tabular}{l|l|l|}
+		\cline{2-3}
+		                                                                 & Processus                        & Threads                                   \\ \hline
+		\multicolumn{1}{|l|}{code}                                       & 1                                & 1 fonction du code                        \\ \hline
+		\multicolumn{1}{|l|}{pile (variables locales)}                   & autant que de threads            & 1 par thread                              \\ \hline
+		\multicolumn{1}{|l|}{fichiers (open, close, read, write)}        & descripteurs de fichiers ouverts & \multicolumn{1}{c|}{\_\_\_\_\_\_\_\_\_\_} \\ \hline
+		\multicolumn{1}{|l|}{réseaux (comme les fichiers)}               &                                  &                                           \\ \hline
+		\multicolumn{1}{|l|}{exit (terminer un processus)}               &                                  &                                           \\ \hline
+		\multicolumn{1}{|l|}{données (variables globales/comme le code)} &                                  &                                           \\ \hline
+	\end{tabular}
+\end{table}
+
+\pagebreak
+
+\section{Processus sous UNIX}
+\subsection{Outils}
+\begin{itemize}
+	\item ps,
+	      htop,
+	      top,
+	      px,
+	      pstree
+	\item taille en mémoire, taille complète (mais la plupart des données sont inutiles)
+	\item taille en RAM (trompeur comme plusieurs portions de la mémoire sont partagées, e.i: libc, printf, malloc...). Smem pour donner des info
+	\item OOM\_Killer -> tue le + gros (mais pas X11 quand meme)
+\end{itemize}
+
+\subsection{Fork}
+\begin{lstlisting}[frame=single]
+int r = fork(); // cree une copie du processus appelant  
+switch(r){
+	case -1:
+		perror("mon fork:"); //mon fork:not enough memory ou autre
+		break;
+	case 0:
+		lefils
+		break;
+	default:
+		le pere de "r" (PID de mon fils)
+}  
+\end{lstlisting}
+
+Après l'appel de fork, le processus fils continue ce qu'on père était en train de faire.
+
+\subsection{exec}
+exec [p|up|lp|le|e]
+\begin{lstlisting}[frame=single]
+	execvp("file", tab);
+	// arg1: nom programme apres lancement, arg2: nom commande,
+	// arg3: parametres de la commande lancee
+	execlp("ls", "ls", "-l"); 
+\end{lstlisting}
+
+\subsection{Wait}
+wait(), waitpid() (exclusivité du père), attend la mort du processus
+
+Lors du lancement de ls -R /, le shell attend la fin du ls avant de refaire un prompt.
+Si on utilise ls -r / \textbf{\&}, le shell n'attend pas
+
+\subsection{Signal}
+kill(pid, SIGNumber)\\
+kill -9 -1, tuer tous les processus brutalement, meme le shell
+kill -15 -1, tue plus gentillement, les applis ont le temps
+
+\pagebreak
+
+\section{Threads}
+\subsection{Création d'un thread}
+
+\begin{lstlisting}[frame=single]
+	int main(){
+		auto th = new thread([](){cout << "hello" << endl;});
+		th->join();
+	}	
+\end{lstlisting}
+
+\subsection{Gestion de la concurrence}
+Variables d'états \underline{partagées}
+Stratégie: modification 1 à la fois
+\begin{itemize}
+	\item instructions atomiques (couteuses, marchent 1 mot à la fois soit <- très localisé)\\
+\end{itemize}
+
+Exemple de base: 2 threads executant A() et B(): le but est d'afficher 20
+\begin{lstlisting}[frame=single]
+	int a = 10;
+	A(){
+		a=20;
+	}
+	B(){
+		printf("%d\n", a);
+	}
+\end{lstlisting}
+Ne marche pas
+
+\begin{lstlisting}[frame=single]
+	int a = 10;
+	bool fini = false;
+	A(){
+		a=20;
+		fini=true;
+	}
+	B(){
+		while(!fini);
+		printf("%d\n", a);
+	}
+\end{lstlisting}
+Ne marche toujours pas
+
+\pagebreak
+
+
+Tony Hoare, le meme gars qui a inventé le qsort, a proposé l'utilisation de monitors, des fonctions en exclusion mutuelle. \\
+On utilise aussi des variables de condition, elles servent à attendre jusqu'à ce qu'on nous reveille (wait, signal).
+
+\begin{lstlisting}[frame=single]
+	mtx_t m; // mutex
+	cnd_c c;
+	int a = 10;
+	bool fini = false;
+	A(){
+		mtx_lock(&m);
+		a=20;
+		fini=true;
+		mtx_unlock(&m);
+	}
+	B(){
+		mtx_lock(&m);
+		while(!fini); // attente active (c'est mal !) (energie)
+			// auto[unlock au wait | lock au reveil] sur m
+			cnd_wait(&c, &m) 
+		printf("...")
+	}
+\end{lstlisting}
+
+\end{document}
