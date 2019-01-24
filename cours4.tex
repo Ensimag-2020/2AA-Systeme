@@ -81,7 +81,7 @@ A l'époque où la mémoire était plus rapide que les processus, on a eu l'idé
 \end{figure}
 
 Exemple de code assembleur exécuté sur deux CPU en parallèle.
-\begin{minted}{asm}
+\begin{minted}[frame=single]{asm}
     ; début section critique
     load $i, %r0
     inc %r0
@@ -100,7 +100,7 @@ Intervient alors l'algorithme de Dekker (1966), permettant de garantir l'obtenti
 \subsection{Booléens et sections critiques}
 Une première idée est de définir des sections critiques à l'aide de booléens.
 
-\begin{minted}{c}
+\begin{minted}[frame=single]{c}
     bool occ = false;
     debut_sc() {
         alpha:  if (occ)
@@ -116,7 +116,7 @@ Une première idée est de définir des sections critiques à l'aide de booléen
 Ce code est faux car on n'a pas d'exclusion mutuelle.
 
 \subsection{Ecriture de \mintinline{c}{occ} avant le test}
-\begin{minted}{c}
+\begin{minted}[frame=single]{c}
     bool occ = false;
     debut_sc() {
         bool old = occ
@@ -136,7 +136,7 @@ Cela ne résoud pas le problème, puisque la variable old est locale et en cas d
 \subsection{Tickets}
 
 Il faut ici connaître son numéro de processeur, à cet effet on considère avoir à disposition un registre \mintinline{c}{p} permettant de récupérer son numéro de processeur. On peut donc calculer \mintinline{c}{q = (1-p)}, le numéro de l'autre processeur.
-\begin{minted}{c}
+\begin{minted}[frame=single]{c}
     int tour = 0;
     debut_sc() {
         alpha:  if (p != tour)
@@ -152,7 +152,7 @@ L'exclusion mutuelle fonctionne bel et bien, mais si l'un des deux processus sou
 
 \subsection{Tableaux}
 On continue à utiliser le registre \mintinline{c}{p}. Cette fois-ci chaque CPU peut annoncer sa demande avant la boucle.
-\begin{minted}{c}
+\begin{minted}[frame=single]{c}
     bool acces[2] = { false }
     debut_sc() {
         acces[p] = true
@@ -171,7 +171,7 @@ L'exclusion mutuelle est vérifiée, mais il y a un risque de boucle infinie en 
 
 On garde le principe de la solution précédente avec un renoncement à une demande et en recommençant.
 
-\begin{minted}{c}    
+\begin{minted}[frame=single]{c}    
     bool acces[2] = { false, false }
     debut_sc() {
         alpha:  acces[p] = true;
@@ -188,7 +188,7 @@ On garde le principe de la solution précédente avec un renoncement à une dema
 
 On observe un interblocage si l'exécution est synchrone, qu'on peut donc résoudre ainsi :
 
-\begin{minted}[fontfamily=tt]{c}    
+\begin{minted}[frame=single]{c}    
     bool acces[2] = { false, false }
     debut_sc() {
         alpha:  acces[p] = true;
@@ -208,7 +208,7 @@ On peut initialiser la graine de la fonction random par le numéro du CPU (par e
 \subsection{Tour + tableaux + renoncement}
 Celui dont ça n'est pas le tour renonce.
 
-\begin{minted}[fontfamily=tt]{c}    
+\begin{minted}[frame=single]{c}    
     bool acces[2] = { false }
     int tour = 0;
     debut_sc() {
@@ -228,7 +228,7 @@ Celui dont ça n'est pas le tour renonce.
 Il n'y a pas d'exclusion mutuelle cas la condition \mintinline{c}{access[q]} est fausse, donc on ne boucle pas.
 
 \subsection{Algorithme de Dekker}
-\begin{minted}[fontfamily=tt]{c}    
+\begin{minted}[frame=single]{c}    
     bool acces[2] = { false }
     int tour = 0;
     debut_sc() {
@@ -258,7 +258,7 @@ On ne demande pas son accès tant que ça n'est pas son tour.
 \subsection{Algorithme de Petersen}
 15 ans plus tard, Petersen propose cette solution bien plus simple.
 
-\begin{minted}[fontfamily=tt]{c}    
+\begin{minted}[frame=single]{c}    
     bool acces[2];
     int dernier;
     debut_sc() {
