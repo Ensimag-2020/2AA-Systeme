@@ -57,6 +57,9 @@
 \node [draw, rotate around={#2:(tmp.center)}] at (tmp) {#3};
 }
 
+% remove extra space
+\newcommand{\squeezeup}{\vspace{-4.5cm}}
+
 % Clickable links
 \usepackage{hyperref}
 % Table of contents depth
@@ -76,7 +79,7 @@
 
 \section{TD1 - Dekker}
 Avec deux processeurs:
-\begin{minted}[frame=single]{c}
+\begin{minted}[frame=single]{gas}
 	debut_SCC();
 		load $i, %r0
 		inc %r0
