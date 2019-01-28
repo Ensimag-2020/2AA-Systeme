@@ -172,28 +172,164 @@ Dans le cas où deux threads arrivent, ils se reveillent et s'endorment entre eu
 \pagebreak
 
 \section{Producteurs Consommateurs}
+
 \begin{figure}[h!]
 	\centering
-	\includegraphics[scale=0.8]{img/prod_cons.png}
+	\includegraphics[scale=0.3]{img/prod_cons.jpg}
 \end{figure}
 
-\vspace{-0.4cm}
 \begin{minted}[frame=single]{c}
 	int iecr = 0; // indice d'ecriture
 	int ilect = 0; // indice de lecture
 	int nb = 0;
 	mtx_t m;
-	cnd_t fp;
-	cnd_t fconso;
+	cnd_t fp; // file de producteurs
+	cnd_t fc; // file de consomateurs
 	Msg Tab[N];
 	
 	push(Msg msg){
-
+		mtx_lock(&m);
+		while (nb == N){
+			cnd_wait(&fp, &m)
+		}
+		tab[iecr] = msg;
+		nb++;
+		iecr++;
+		iecr %= N;
+		cnd_signal(&fc)
+		mtx_unlock(&m);
 	}
 
-	Msg shift(){
 
+
+
+
+
+	Msg shift(){
+		mtx_lock(&m);
+		while (nb == 0){
+			cnd_wait(&c, &m);
+		}
+		Msg msg = tab[ilect];
+		nb--;
+		ilect++;
+		ilect %= N;
+		cnd_signal(&fp);	
+		mtx_unlock(&m);
+		return msg;
+	}
+\end{minted}
+Les modifications des indices ilect et iecr doivent être faites au même endroit pour lire/ecrire dans la même case du tableau.
+
+\pagebreak
+
+\section{Lecteurs-Redacteurs (shared mutex)}
+On dispose d'une base de données où on stock des informations, on autorise les lectures à plusieurs mais les ecritures seront limités à 1 thread à la fois et il sera \underline{tout seul} (pas de lecture, pas d'autres redacteurs).
+
+On utilise un compteur de lecteurs et un compteurs de redacteurs.\\
+Lorsqu'un redacteur finit d'ecrire, il faut donner la priorité aux redacteurs. L'inconvenient de cela est lorsqu'il y a beaucoup d'ecrivains, les lecteurs ne passent jamais. Cette priorité peut donc causer une famine de lecture. On peut aussi créer une famine d'écriture si la priorité aux lecteurs est choisie (pire qu'une famine de lecture).
+
+Pour reveiller la bonne personne, on a besoin de compter les lecteurs et redacteurs en attente.
+
+\begin{minted}[frame=single]{c}
+	int nblect;
+	bool ecr;
+	int nblect_att;
+	int nbecr_att;
+	mtx_t m;
+	cnd_t clect;
+	cnd_t cecr;
+
+	debut_lire(){
+		mtx_lock(&m);
+		while (nbecr_att > 0 || ecr){
+			nblect_att++;
+			cnd_wait(&clect, &m);
+			nblect_att--;
+		}
+		nblect++;
+		mtx_unlock(&m);
+	}
+
+	fin_lire(){
+		mtx_lock(&m);
+		if (nblect_att != 0 && nblect == 0){
+			cnd_signal(&cecr);
+		}
+		mtx_unlock(&m);
+	}
+
+	debut_ecr(){
+		mtx_lock(&m);
+		while (ecr || nblect != 0){
+			nbecr_att++;
+			cnd_wait(&cecr, &m)
+			nbecr_att--;
+		}
+		ecr = true;
+		mtx_unlock(&m);
+	}
+
+	fin_ecr(){
+		mtx_lock(&m);
+		ecr = false;
+		if (nbecr_att > 0){
+			cnd_signal(&cecr);
+		} else {
+			if (nblect_att > 0){
+				cnd_broadcast(&clect);
+			}
+		}
+		mtx_unlock(&m);
 	}
 \end{minted}
 
+Si on retire les compteurs des lecteurs et redacteurs en attente, le code devient:
+\begin{minted}[frame=single]{c}
+	int nblect;
+	bool ecr;
+	int nblect_att;
+	int nbecr_att;
+	mtx_t m;
+	cnd_t clect;
+	cnd_t cecr;
+
+	debut_lire(){
+		mtx_lock(&m);
+		nblect++;
+		while (ecr){
+			cnd_wait(&clect, &m);
+		}
+		nblect++;
+		mtx_unlock(&m);
+	}
+
+	fin_lire(){
+		mtx_lock(&m);
+		if (nblect == 0){
+			cnd_signal(&cecr);
+		}
+		mtx_unlock(&m);
+	}
+
+	debut_ecr(){
+		mtx_lock(&m);
+		while (ecr || nblect != 0){
+			cnd_wait(&cecr, &m)
+		}
+		ecr = true;
+		mtx_unlock(&m);
+	}
+
+	fin_ecr(){
+		mtx_lock(&m);
+		ecr = false;
+		if (nblect > 0){
+			cnd_broadcast(&clect);
+		} else {
+			cnd_signal(&cecr);
+		}
+		mtx_unlock(&m);
+	}
+\end{minted}
 \end{document}
