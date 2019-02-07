@@ -223,8 +223,8 @@ Tous les philos ont pris la fourchette de droite
     }
 \end{minted}
 
-\section{Rendez-vous à 2}
 \begin{minted}[frame=single]{c}
+    // Rendez-vous à 2
     sem_t nb_a = 0;
     sem_t nb_b = 0;
 
@@ -237,6 +237,168 @@ Tous les philos ont pris la fourchette de droite
         V(&nb_b);
         P(&nb_a);
     }
-    
 \end{minted}
+
+\pagebreak
+
+\begin{minted}[frame=single]{c}
+    // Philo 4: 3 états
+    enum EtatPhilo{MANGE, PENSE, AFAIM};
+    EtatPhilo etatsPhilo[N] = {PENSE, ..., PENSE};
+    sem_t sprive[N] = {0,..,0};
+    sem_t ms = 1; // Exclusion mutuelle
+
+    test(i){
+        if (EtatPhilo[(i+1)%N] != MANGE && EtatPhilo[(i-1)%N] != MANGE 
+                && EtatPhilo[i] == AFAIM){
+            EtatPhilo[i] = MANGE;
+            V(sprive[i]);
+        }
+    }
+
+    prendre_fourchette(i){
+        // (Changement d'état + test) en exclussion mutuelle 
+        P(&ms);
+        etatPhiio[i] = AFAIM;
+        test(i);
+        V(&ms);
+
+        // Blocage
+        P(&sprive[i]);
+    }
+
+    poser_fourchette(i){
+        // En exclusion mutuelle
+        P(&ms);
+        etatPhilo[i] = PENSE;
+        test((i+1)%N);
+        test((i-1)%N);
+        V(&ms);
+    }
+\end{minted}
+
+\pagebreak
+
+\subsection{Producteurs Consomateurs}
+\begin{figure}[h!]
+    \centering
+    \includegraphics[scale=0.2]{img/prod_cons.jpg}
+\end{figure}
+\begin{minted}[frame=single]{c}
+    sem_t ms = 1;
+    sem_t pleines = 0;
+    sem_t vides = N;
+    int ilect, iecr;
+    Tampon tab[N];
+
+    push(Msg msg){
+        // Verifie s'il existe des cas vide puis se mettre en exclu mut
+        P(&vides);
+        P(&ms)
+        
+        // Ecrire le msg
+        tab[iecr] = msg;
+        iecr++;
+        iecr %= N;
+
+        // Lacher l'exclu mut
+        V(&ms);
+        V(&pleines)
+    }
+
+    MsgShift(){
+        P(&pleine);
+        P(&ms);
+        
+        Msg msg = tab[ilect];
+        ilect = (ilect+1)%N;
+
+        V(&ms);
+        V(&vide);
+        return msg;
+    }
+\end{minted}
+
+\pagebreak
+
+\subsection{Producteurs consommateurs 2 (Lire/Ecrire en même temps)}
+Utiliser deux semaphores qui permettent de lire et ecrire en même temps sans mélanger.
+
+\begin{minted}[frame=single]{c}
+    sem_t ms = 1;
+    sem_t ms2 = 1;
+    sem_t pleines = 0;
+    sem_t vides = N;
+    int ilect, iecr;
+    Tampon tab[N];
+
+    push(Msg msg){
+        // Verifie s'il existe des cas vide puis se mettre en exclu mut
+        P(&vides);
+        P(&ms)
+        
+        // Ecrire le msg
+        tab[iecr] = msg;
+        iecr++;
+        iecr %= N;
+
+        // Lacher l'exclu mut
+        V(&ms);
+        V(&pleines)
+    }
+
+    MsgShift(){
+        P(&pleine);
+        P(&ms2);
+        
+        Msg msg = tab[ilect];
+        ilect = (ilect+1)%N;
+
+        V(&ms2);
+        V(&vide);
+        return msg;
+    }
+\end{minted}
+
+\pagebreak
+
+\subsection{Lecteurs redacteurs}
+Le but est de pouvoir lire à plusieurs mais d'ecrire tout seul.
+\begin{minted}[frame=single]{c}
+    int nblect = 0;
+    sem_t ms = 1;
+    sem_t acces_BD = 1; // Acces à la base de données
+    sem_t sas = 1; // FIFO aux redacteurs
+
+    debut_lire(){
+        P(&sas);
+        P(&ms);
+        nblect++;
+        if (nblect == 1){
+            P(&acces_BD);
+        }
+        V(&ms);
+        V(&sas);
+    }
+
+    fin_lire(){
+        P(&ms);
+        nblect--;
+        if (nblect == 0){
+            V(&acces_BD);
+        }
+        V(&ms);
+    }
+
+    debut_ecr(){
+        P(&sas);
+        P(&acces_BD);
+        V(&sas);
+    }
+
+    fin_ecr(){
+        V(&acces_BD);
+    }
+\end{minted}
+
 \end{document}

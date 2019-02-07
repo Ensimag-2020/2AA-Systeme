@@ -1,0 +1,175 @@
+\documentclass[11pt]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+
+\usepackage[a4paper, left=2cm, right=2cm, top=3.5cm, bottom=3.5cm]{geometry}
+\usepackage[french]{babel}
+
+% Paragraph spacing
+\setlength{\parskip}{1em}
+
+% Fancy headers
+\usepackage{fancyhdr}
+
+% Captions for subfigures
+\usepackage{subcaption}
+
+
+% Code highlighting
+\usepackage{minted}
+
+% Footnote inside a caption
+\usepackage{fnpos}
+\usepackage{ftnxtra}
+
+% Colored text, provides \textcolor{color}{text}
+\usepackage{xcolor}
+
+% Maths
+\usepackage{amsmath}
+\usepackage{amssymb}
+
+% Todo notes
+\usepackage{todonotes}
+
+% Table of contents for bibliography
+\usepackage[nottoc]{tocbibind}
+
+% Inline monospace font
+\def\code#1{\texttt{#1}}
+
+% Figures
+\usepackage{graphicx}
+
+% Draw figures
+\usepackage{tikz}
+
+% Code listing
+\usepackage{listings}
+
+% Tikz node rotation
+\usetikzlibrary{positioning}
+
+% Turing machine
+\usetikzlibrary{chains,fit,shapes}
+
+% Usage: \rotnode[options]{rotation}{text}
+\newcommand\rotnode[3][]{%
+\node [#1, opacity=0.0] (tmp) {#3};
+\node [draw, rotate around={#2:(tmp.center)}] at (tmp) {#3};
+}
+
+% remove extra space
+\newcommand{\squeezeup}{\vspace{-4.5cm}}
+
+% Clickable links
+\usepackage{hyperref}
+% Table of contents depth
+\setcounter{tocdepth}{2}
+
+% Inline code
+\usepackage{listings}
+\usepackage{color}
+
+\title{Systèmes d'exploitation - Synchronisations III}
+
+\author{Othmane AJDOR}
+\date{2018-2019}
+
+\begin{document}
+\maketitle
+
+\pagebreak
+\tableofcontents
+\pagebreak
+
+\section{Grain}
+
+"Grain" calcul/cout de gestion ou de communications
+
+\section{Synchronisation dans les OS}
+\subsection{Antiquité}
+
+\subsubsection{Projet système}
+On disposait d'un seul processeur, soit une activité à la fois.\\
+Il ne faut interrompre des activités qui touchent à des ressources pour lancer une deuxieme. Pour cela, on met en place des sections critiques (sémaphores) dans l'OS et masquer les interruptions (!= exception -déclenché par le processeur lui meme-) pendant l'appel de l'OS.\\
+Les interruptions ne seront prises en charges qu'à la sortie du bout de code comme on les a masquées.Les exceptions se font une à la fois, on peut pas faire deux codes (user et section critique dans l'OS).
+
+\subsubsection{Linux 1.0}
+Gestion de multi-processeurs.\\
+Il faut que le noyau fonctionne meme si les processeurs veulent executer des fonctions du systeme.\\
+Pour ce faire, on a choisi de placer un BKL (bit kernel lock) à chaque entrée de l'OS. Ce lock est une attente active avec les fonctions atomiques.\\
+Ce modèle ne passe pas à l'echelle à cause de l'attente active.
+
+\subsubsection{Aller plus vite}
+Pour aller plus vite, on parrallelise le noyau => remplacer le BKL (unique) par des (beaucoup) petits locks.\\
+Pour sortir les tests de synchronisation du noyau => test en mode user ou blocage, liberation de threads en mode kernel.
+
+Attente active:
+\begin{minted}[frame=single]{c}
+int lock = false;
+while (atomic_load(lock)); // /!\ BUG
+    atomic_store(lock, 1); // /!\ BUG
+SC
+    atomic_store(lock, 0);
+\end{minted}
+
+\pagebreak
+
+test\_and\_set() => tester une valeur, si elle vaut 0, je la met à 1 et je retourne l'ancienne valeur
+\begin{minted}[frame=single]{c}
+while (test_and_set(lock));
+    SC
+\end{minted}
+
+CMP\_XCHG(v, old, new):
+\begin{minted}[frame=single]{c}
+if v==old
+    mettre v a new
+renvoyer l ancienne valeur de v
+
+/* Verifie si la valeur de old a été modifiée par nous meme ou dans une autre 
+partie du code */
+atomic_inc(v){
+    old = atomic_load(v);
+    while(cmp_exchange(v, old, old+1) != old){
+        old = atomic_load(v);
+    }
+}
+\end{minted}
+
+Load Linked:
+\begin{minted}[frame=single]{c}
+load_linked(v);
+//...
+//...    
+bool store_conditionnal(v, new); // bool reussi ou pas
+
+\end{minted}
+
+\pagebreak
+
+\subsubsection{Futex}
+
+Quand on fait un wait, on attend à ce que v ait la valeur attendue
+\begin{minted}[frame=single]{c}
+futex_wait(&v, attendue); // attendu est la valeur liée au test atomic coté user
+futex_wake(&v, nbWake); // Identique à signal où nbWake 
+// est nombre de threads à reveiller
+\end{minted}
+
+\begin{minted}[frame=single]{c}
+int mutex=0;
+
+\end{minted}
+
+
+
+
+
+
+
+
+
+\end{document}
