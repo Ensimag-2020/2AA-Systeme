@@ -133,9 +133,36 @@ Il existe sur Linux un script appelé \textbf{wonder shaper} qui permet de limit
     \item liste unique de tâches prêtes
     \item elle est triée par priorité (fo de priorité goodness)
 \end{itemize}
+
+C'est plus simple à utiliser et à régler.\\
+Son défaut, le mutex et la manipulation/insertion de la liste, il faut la garder triée pour que ça soit en O(n).
+
+Les ordonnanceurs en O(1) utilisent des liste\textbf{s} par priorité.\\
+\begin{figure}
+    \centering
+    % \includegraphics{}
+\end{figure}
+Quand la liste "crédits" est vide:
+\begin{itemize}
+    \item on re-crédite les expirés (en fo de leur priorité)
+    \item on inverse les deux ensembles de listes
+\end{itemize}
+C'est simple à utiliser mais difficle à régler ou calibrer la fonction de crédits qui dit quand est ce qu'on passe.
+
+Les ordonnanceur en O(log(n)) (CFS) utilisent une "liste" (Red-black tree, arbre binaire bien balancé) de priorité, avec une fo de priorité.
+
+\subsection{Multi-Coeurs/Processeurs}
+Contention du \underline{\textbf{lock}} protegeant la "liste" => plusieurs listes (1 par coeur/processeur) => pas de lock.\\
+Le défaut c'est que maintenant on dispose d'une liste par proc/coeur, ce qui veut dire que certains coeurs peuvent rester sans activité, il faut donc equilibrer les listes.
+
+Vol de travail => un voleur (inoccupé) va choisir (random) une victime et lui prendre des tâches.\\
+Une victime c'est bien, deux c'est mieux (c'est le prof qui l'a dit), ça permet d'equilibrer rapidement.
+
+
+Daemon pour équilibrer. De temps en temps, vole les riches pour donner aux pauvres.\\
+Ca coute un peu de temps en temps
+
+
 \section{Passage à l'echelle}
-
-
-
 
 \end{document}

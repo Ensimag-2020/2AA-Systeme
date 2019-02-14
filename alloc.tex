@@ -1,0 +1,195 @@
+\documentclass[11pt]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+
+\usepackage[a4paper, left=2cm, right=2cm, top=3.5cm, bottom=3.5cm]{geometry}
+\usepackage[french]{babel}
+
+% Paragraph spacing
+\setlength{\parskip}{1em}
+
+% Fancy headers
+\usepackage{fancyhdr}
+
+% Captions for subfigures
+\usepackage{subcaption}
+
+
+% Code highlighting
+\usepackage{minted}
+
+% Footnote inside a caption
+\usepackage{fnpos}
+\usepackage{ftnxtra}
+
+% Colored text, provides \textcolor{color}{text}
+\usepackage{xcolor}
+
+% Maths
+\usepackage{amsmath}
+\usepackage{amssymb}
+
+% Todo notes
+\usepackage{todonotes}
+
+% Table of contents for bibliography
+\usepackage[nottoc]{tocbibind}
+
+% Inline monospace font
+\def\code#1{\texttt{#1}}
+
+% Figures
+\usepackage{graphicx}
+
+% Draw figures
+\usepackage{tikz}
+
+% Code listing
+\usepackage{listings}
+
+% Tikz node rotation
+\usetikzlibrary{positioning}
+
+% Turing machine
+\usetikzlibrary{chains,fit,shapes}
+
+% Usage: \rotnode[options]{rotation}{text}
+\newcommand\rotnode[3][]{%
+\node [#1, opacity=0.0] (tmp) {#3};
+\node [draw, rotate around={#2:(tmp.center)}] at (tmp) {#3};
+}
+
+% remove extra space
+\newcommand{\squeezeup}{\vspace{-4.5cm}}
+
+% Clickable links
+\usepackage{hyperref}
+% Table of contents depth
+\setcounter{tocdepth}{2}
+
+% Inline code
+\usepackage{listings}
+\usepackage{color}
+
+\title{Systèmes d'exploitation - Mémoire}
+
+\author{Othmane AJDOR}
+\date{2018-2019}
+
+\begin{document}
+\maketitle
+
+\pagebreak
+\tableofcontents
+\pagebreak
+
+\section{Allocateurs mémoires}
+\begin{itemize}
+    \item Coté kernel (+embarqué minimaliste)
+    \item mémoire virtuelle <== le cours du jour
+\end{itemize}
+
+Ca necessite un partage efficace (allocation au plus juste) des espaces mémoire dans un espace trop petit et borné
+
+\begin{itemize}
+    \item satisfaire le client dans le working set si trop gros => simuler une mémoire plus grande.
+\end{itemize}
+
+La mémoire virtuelle est découpée en zone:
+\begin{itemize}
+    \item les zones libres sont libres: l'allocateur peut ecrire dedans
+    \item ca coute moins cher en terme de cycles CPU de gerer une liste de mémoire libre que de gérer une liste de toutes les zones utilisées.
+\end{itemize}
+
+Les algorithmes de chainage simple comme FAT32 fragmentent, ce qui n'est pas recommendé sur un espace large.
+EXT4 et NTFS ne le font pas.
+
+\section{Mémoires}
+\subsection{Malloc \& free}
+\begin{itemize}
+    \item petit -> la limite est de 64octets, si on demande 1o, on en aura 64.
+    \item moyen
+    \item grand -> 128 ko, la gestion de l'unité est gérée par l'OS != mise en RAM paresseuse et par morceau
+\end{itemize}
+
+\subsection{SLAB, SLOB, SLUB}
+Allocateur spécialisé (1 taille, 1 type d'objet, ...)
+L'avantage de ces allocateurs c'est qu'ils sont plus simple que les autres, ce qui nous permet de faire des choses comme lock\_free en multi-thread.
+
+\subsection{alloca}
+Allocateur historique qui ne sert plus à rien. Il faisait des allocations en pile et ne fait pas de libération.\\
+Elle est faite automatiquement à la fin de la fonction.
+
+\pagebreak
+
+\subsection{Garbage collector}
+Allocation classique avec une libération à la charge du runtime
+\begin{minted}[frame=single]{c}
+    #include "gc.h"
+    {
+        GC_INIT();
+        ...
+        void *p = GC_malloc(taille);
+        ...
+    }
+\end{minted}
+
+Le coût du garbage collector est un problème.\\
+\subsubsection{Base}
+On part d'une liste des racines en scannant les objets pour trouver ceux n'étant plus accessibles des racines.
+
+\subsubsection{Stétegie de scan}
+\begin{itemize}
+    \item Stop the world (Java)
+    \item Mark and sweep (Go) [Dijkstra], on scan tout le temps
+\end{itemize}
+
+En java, on dispose de plusieurs zones:
+\begin{itemize}
+    \item (les jeunes) eden -> si plein, on lance un scan mineur. Sinon on les passe dans S0 (survivor space) puis dans S1.
+    \item (old generation) tenured et encore plus vieux les objets permanents
+\end{itemize}
+On ne s'occupe que des zones jeunes qui sont plus susceptibles d'être liberées.
+
+Dans le cas d'objets qui pointent sur eux memes, on a besoin de tout parcourir depuis la racine et ce n'est pas suffisant.\\
+C'est pour ça qu'on utilise des indicateurs sur les liens entre objets:
+\begin{itemize}
+    \item weak, phantom. EZ, on libère
+    \item soft (possible de GC ?) -> il faut vérifier tous les circuits et vérifier que tous les liens qui menent vers celui là sont soft.
+    \item strong. 
+\end{itemize}
+
+
+En GO, on dispose de la notion de tache qui permet de faciliter le lancement du garbage collector:
+\begin{itemize}
+    \item On scan tout et tout le temps
+    \item mark and sweep
+\end{itemize}
+
+
+GC Pacer: equilibrer l'execution entre calcul et GC.
+
+\pagebreak
+
+En Rust, tout est à expliquer au compilateur qui fera les malloc et free
+\begin{minted}[frame=single]{rust}
+    let mut a = 12; // a est mutable
+    let b = &a;
+    println!("{}", a); // affiche 12
+    println!("{}", b); // affiche 12, auto unref    
+    a = 11;
+    println!("{}", a); // affiche 11
+    println!("{}", b); // ça ne compile pas
+\end{minted}
+Pour savoir à quel moment il faut détruire, Rust utilise un paradigme appelé "proprietaire unique" où les pointeurs font des emprunts temporaires. Dans le code ci-dessus, b fait un emprunt temporaire. Entre le premier print de b et le deuxiemme , a a changé. Le deuxieme print de b n'est plus valide comme c'était un emprunt temporaire. Il faut refaire un emprunt. On n'a pas le droit de modifier une valeur après un emprunt. On n'a non plus le droit d'emprunter a et le modifier dans b.\\
+C'est le borrow checker qui s'occupe de tout cela.
+
+\begin{minted}[frame=single]{rust}
+    let v:Vect<T> = (1=1000000).map(|x| x*x).take(10).collect();
+    // (1=1000000) est un iterateur
+    // map est un iterateur
+    // take est un iterateur
+    // collect crée le vecteur (10 multiplications)
+\end{minted}
+\end{document}

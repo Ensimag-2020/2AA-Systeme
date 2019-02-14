@@ -169,8 +169,10 @@ mtx_lock(*m){
 
 unlock(*m){
     atomic_store(&m, 0); // Ajoute barriere memoire qui valide les caches (10 cycles)
-    futex_wake(&m, 1); // reveiller un thread (20k cycles)
+    futex_wake(&m, 1); // reveiller un thread (20k cycles
+    )
 }
+
 \end{minted}
 
 
